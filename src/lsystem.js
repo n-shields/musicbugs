@@ -62,15 +62,15 @@ function mutateRuleStr(s) {
   const r = Math.random()
   const pos = Math.floor(Math.random() * s.length)
 
-  if (r < 0.40) {
-    // substitution
+  if (r < 0.55) {
+    // substitution — preserves length, least disruptive
     const chars = s.split('')
     chars[pos] = randomSymbol()
     return chars.join('')
-  } else if (r < 0.65 && s.length < 24) {
+  } else if (r < 0.72 && s.length < 24) {
     // insertion
     return s.slice(0, pos) + randomSymbol() + s.slice(pos)
-  } else if (r < 0.85 && s.length > 3) {
+  } else if (r < 0.88 && s.length > 3) {
     // deletion
     return s.slice(0, pos) + s.slice(pos + 1)
   } else if (pos < s.length - 1) {
@@ -85,7 +85,7 @@ function mutateRuleStr(s) {
 function mutateOne(parent) {
   const rules = { ...parent.rules }
   const keys = Object.keys(rules)
-  const numMutations = Math.random() < 0.35 ? 2 : 1
+  const numMutations = 1
   for (let i = 0; i < numMutations; i++) {
     const key = keys[Math.floor(Math.random() * keys.length)]
     rules[key] = mutateRuleStr(rules[key])
@@ -94,7 +94,7 @@ function mutateOne(parent) {
     id: uid(),
     axiom: parent.axiom,
     rules,
-    angle: Math.max(5, Math.min(60, parent.angle + (Math.random() - 0.5) * 8)),
+    angle: Math.max(5, Math.min(60, parent.angle + (Math.random() - 0.5) * 4)),
     generations: parent.generations,
     gen: parent.gen + 1,
   }

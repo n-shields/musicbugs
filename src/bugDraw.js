@@ -21,7 +21,7 @@ export function drawBug(canvas, lsystem) {
   const str = expand(lsystem)
   const angleRad = (lsystem.angle * Math.PI) / 180
 
-  let x = 0, y = 0, a = -Math.PI / 2
+  let x = 0, y = 0, a = -Math.PI / 2, depth = 0
   const stack = []
   const lines = []
 
@@ -29,7 +29,7 @@ export function drawBug(canvas, lsystem) {
     if (c === 'F') {
       const nx = x + Math.cos(a)
       const ny = y + Math.sin(a)
-      lines.push([x, y, nx, ny])
+      lines.push([x, y, nx, ny, depth])
       x = nx
       y = ny
     } else if (c === '+') {
@@ -38,8 +38,10 @@ export function drawBug(canvas, lsystem) {
       a -= angleRad
     } else if (c === '[') {
       stack.push({ x, y, a })
+      depth++
     } else if (c === ']') {
       if (stack.length > 0) ({ x, y, a } = stack.pop())
+      depth = Math.max(0, depth - 1)
     }
   }
 
@@ -62,22 +64,33 @@ export function drawBug(canvas, lsystem) {
   const offY = (H - bh * scale) / 2 - minY * scale
 
   const hue = bugHue(lsystem)
-  ctx.strokeStyle = `hsl(${hue}, 75%, 62%)`
-  ctx.shadowColor = `hsl(${hue}, 90%, 65%)`
-  ctx.shadowBlur = 6
-  ctx.lineWidth = 1.5
   ctx.lineCap = 'round'
 
-  ctx.beginPath()
-  for (const [x1, y1, x2, y2] of lines) {
-    const px1 = x1 * scale + offX, py1 = y1 * scale + offY
-    const px2 = x2 * scale + offX, py2 = y2 * scale + offY
-    // original
-    ctx.moveTo(px1, py1)
-    ctx.lineTo(px2, py2)
-    // mirrored around vertical centre
-    ctx.moveTo(W - px1, py1)
-    ctx.lineTo(W - px2, py2)
+  // Group lines by depth so we can vary thickness and brightness
+  const byDepth = new Map()
+  for (const seg of lines) {
+    const d = seg[4]
+    if (!byDepth.has(d)) byDepth.set(d, [])
+    byDepth.get(d).push(seg)
   }
-  ctx.stroke()
+  const maxDepth = byDepth.size > 0 ? Math.max(...byDepth.keys()) : 0
+
+  for (const [d, segs] of [...byDepth.entries()].sort((a, b) => a[0] - b[0])) {
+    const t = maxDepth > 0 ? d / maxDepth : 0
+    ctx.lineWidth = Math.max(0.5, 2.5 - t * 2)
+    ctx.strokeStyle = `hsl(${hue}, 70%, ${48 + t * 22}%)`
+    ctx.shadowColor = `hsl(${hue}, 90%, ${55 + t * 15}%)`
+    ctx.shadowBlur = d === 0 ? 8 : 3
+
+    ctx.beginPath()
+    for (const [x1, y1, x2, y2] of segs) {
+      const px1 = x1 * scale + offX, py1 = y1 * scale + offY
+      const px2 = x2 * scale + offX, py2 = y2 * scale + offY
+      ctx.moveTo(px1, py1)
+      ctx.lineTo(px2, py2)
+      ctx.moveTo(W - px1, py1)
+      ctx.lineTo(W - px2, py2)
+    }
+    ctx.stroke()
+  }
 }
