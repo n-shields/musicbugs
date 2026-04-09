@@ -9,7 +9,11 @@ function hashStr(s) {
 }
 
 export function bugHue(lsystem) {
-  return hashStr(lsystem.axiom + JSON.stringify(lsystem.rules)) % 360
+  // Angle drives hue: tight (5°) → blue-purple (240°), wide (60°) → orange (30°)
+  const angleHue = 240 - ((lsystem.angle - 5) / 55) * 210
+  // Rules add a small offset so siblings at the same angle are still distinguishable
+  const offset = (hashStr(JSON.stringify(lsystem.rules)) % 50) - 25
+  return ((Math.round(angleHue) + offset) + 360) % 360
 }
 
 export function drawBug(canvas, lsystem) {
@@ -27,8 +31,9 @@ export function drawBug(canvas, lsystem) {
 
   for (const c of str) {
     if (c === 'F') {
-      const nx = x + Math.cos(a)
-      const ny = y + Math.sin(a)
+      const len = Math.max(0.4, 1.6 - depth * 0.22)
+      const nx = x + Math.cos(a) * len
+      const ny = y + Math.sin(a) * len
       lines.push([x, y, nx, ny, depth])
       x = nx
       y = ny
