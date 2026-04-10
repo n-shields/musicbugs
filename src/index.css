@@ -112,7 +112,7 @@ body {
 }
 
 @media (max-width: 640px) {
-  .bug-card { min-height: 55vw; }
+  .bug-card { height: 55vw; }
 }
 
 .bug-card:hover {
