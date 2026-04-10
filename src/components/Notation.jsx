@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
-import { Renderer, Stave, StaveNote, Voice, Formatter, Beam } from 'vexflow'
-import { buildNotes, DUR_TYPES } from '../notes.js'
+import { Renderer, Stave, StaveNote, Voice, Formatter, Beam, Dot, Tuplet } from 'vexflow'
+import { buildNotes } from '../notes.js'
 import { bugHue } from '../bugDraw.js'
 
 const NOTE_NAMES = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b']
@@ -10,9 +10,32 @@ function midiToVexKey(midi) {
   return `${NOTE_NAMES[midi % 12]}/${octave}`
 }
 
-const NOTES_PER_LINE = 8
-const STAVE_BAND = 92   // px allocated per line (extra room for ledger lines below)
-const STAVE_OFFSET = 22 // top margin within each band
+// VexFlow base duration (strip 'd'/'t' suffixes — modifiers handle those)
+function vexBaseDur(dur) {
+  return dur.replace(/[dt]$/, '')
+}
+
+const NOTES_PER_LINE = 9
+const STAVE_BAND = 92
+const STAVE_OFFSET = 22
+
+// Split notes into lines, keeping triplet groups together
+function toLines(notes) {
+  const lines = []
+  let line = []
+  for (let i = 0; i < notes.length; i++) {
+    const note = notes[i]
+    // If a triplet group would straddle the limit, push the line now
+    if (line.length >= NOTES_PER_LINE - 2 && note.tripletStart) {
+      if (line.length > 0) { lines.push(line); line = [] }
+    } else if (line.length >= NOTES_PER_LINE) {
+      lines.push(line); line = []
+    }
+    line.push(note)
+  }
+  if (line.length > 0) lines.push(line)
+  return lines
+}
 
 export default function Notation({ bug }) {
   const containerRef = useRef(null)
@@ -29,11 +52,9 @@ export default function Notation({ bug }) {
     const color = `hsl(${hue}, 65%, 62%)`
 
     const padL = 10
-    const padR = 10
     const width = el.offsetWidth || 280
-
-    const numLines = Math.max(1, Math.ceil(notes.length / NOTES_PER_LINE))
-    const totalHeight = numLines * STAVE_BAND + 22
+    const lines = toLines(notes)
+    const totalHeight = lines.length * STAVE_BAND + 22
 
     try {
       const renderer = new Renderer(el, Renderer.Backends.SVG)
@@ -42,41 +63,56 @@ export default function Notation({ bug }) {
       ctx.setFillStyle(color)
       ctx.setStrokeStyle(color)
 
-      for (let line = 0; line < numLines; line++) {
-        const lineNotes = notes.slice(line * NOTES_PER_LINE, (line + 1) * NOTES_PER_LINE)
-        if (lineNotes.length === 0) break
-
-        const y = line * STAVE_BAND + STAVE_OFFSET
-        const clefWidth = line === 0 ? 46 : 0
-        const staveWidth = width - padL - padR
-        const noteAreaWidth = staveWidth - clefWidth - 8
+      for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+        const lineNotes = lines[lineIdx]
+        const y = lineIdx * STAVE_BAND + STAVE_OFFSET
+        const clefExtra = lineIdx === 0 ? 46 : 0
+        const staveWidth = width - padL * 2
+        const noteAreaWidth = staveWidth - clefExtra - 8
 
         const stave = new Stave(padL, y, staveWidth)
-        if (line === 0) stave.addClef('treble')
+        if (lineIdx === 0) stave.addClef('treble')
         stave.setContext(ctx).draw()
 
-        const staveNotes = lineNotes.map(({ midi, durIdx }) =>
-          new StaveNote({
-            keys: [midiToVexKey(midi)],
-            duration: DUR_TYPES[durIdx],
+        // Build StaveNotes
+        const staveNotes = lineNotes.map(note => {
+          const sn = new StaveNote({
+            keys: [midiToVexKey(note.midi)],
+            duration: vexBaseDur(note.dur),
             auto_stem: true,
           }).setStyle({ fillStyle: color, strokeStyle: color })
+          if (note.dotted) Dot.buildAndAttach([sn], { all: true })
+          return sn
+        })
+
+        // Collect triplet groups within this line
+        const tripletMap = new Map()
+        lineNotes.forEach((note, i) => {
+          if (note.tripletGroup !== undefined) {
+            if (!tripletMap.has(note.tripletGroup)) tripletMap.set(note.tripletGroup, [])
+            tripletMap.get(note.tripletGroup).push(staveNotes[i])
+          }
+        })
+        const tuplets = [...tripletMap.values()].map(group =>
+          new Tuplet(group, { num_notes: 3, notes_occupied: 2, ratioed: false })
         )
 
-        const beams = Beam.generateBeams(staveNotes)
+        // Beams for non-triplet eighth/sixteenth notes
+        const beamable = staveNotes.filter((_, i) => lineNotes[i].tripletGroup === undefined)
+        const beams = Beam.generateBeams(beamable)
+
         const voice = new Voice().setMode(Voice.Mode.SOFT)
         voice.addTickables(staveNotes)
         new Formatter().joinVoices([voice]).format([voice], noteAreaWidth)
         voice.draw(ctx, stave)
         beams.forEach(b => b.setContext(ctx).draw())
+        tuplets.forEach(t => t.setContext(ctx).draw())
       }
 
-      // Recolour anything VexFlow left black (clef, staff lines, ledger lines)
+      // Recolour anything VexFlow drew in black
       el.querySelectorAll('svg path, svg rect, svg text').forEach(node => {
-        const fill = node.getAttribute('fill')
-        const stroke = node.getAttribute('stroke')
-        if (fill === 'black' || fill === '#000000') node.setAttribute('fill', color)
-        if (stroke === 'black' || stroke === '#000000') node.setAttribute('stroke', color)
+        if (node.getAttribute('fill') === 'black') node.setAttribute('fill', color)
+        if (node.getAttribute('stroke') === 'black') node.setAttribute('stroke', color)
       })
     } catch (e) {
       console.error('Notation render error:', e)

@@ -1,4 +1,6 @@
-export const SEEDS = [
+import { SCALES } from './scales.js'
+
+const BASE_SEEDS = [
   {
     id: 'seed-0',
     axiom: 'F',
@@ -33,9 +35,18 @@ export const SEEDS = [
   },
 ]
 
+// Randomise musical character at startup
+export const SEEDS = BASE_SEEDS.map(s => ({
+  ...s,
+  rootPitch: 60 + Math.floor(Math.random() * 12), // C4–B4
+  scaleIdx:  Math.floor(Math.random() * SCALES.length),
+}))
+
+// Expand using min(gen+1, generations) iterations so early-gen bugs are visually simple
 export function expand(lsystem) {
+  const iters = Math.min(lsystem.gen + 1, lsystem.generations)
   let str = lsystem.axiom
-  for (let i = 0; i < lsystem.generations; i++) {
+  for (let i = 0; i < iters; i++) {
     let next = ''
     for (const c of str) {
       next += lsystem.rules[c] ?? c
@@ -63,18 +74,14 @@ function mutateRuleStr(s) {
   const pos = Math.floor(Math.random() * s.length)
 
   if (r < 0.55) {
-    // substitution — preserves length, least disruptive
     const chars = s.split('')
     chars[pos] = randomSymbol()
     return chars.join('')
   } else if (r < 0.72 && s.length < 24) {
-    // insertion
     return s.slice(0, pos) + randomSymbol() + s.slice(pos)
   } else if (r < 0.88 && s.length > 3) {
-    // deletion
     return s.slice(0, pos) + s.slice(pos + 1)
   } else if (pos < s.length - 1) {
-    // swap adjacent
     const chars = s.split('')
     ;[chars[pos], chars[pos + 1]] = [chars[pos + 1], chars[pos]]
     return chars.join('')
@@ -85,11 +92,17 @@ function mutateRuleStr(s) {
 function mutateOne(parent) {
   const rules = { ...parent.rules }
   const keys = Object.keys(rules)
-  const numMutations = 1
-  for (let i = 0; i < numMutations; i++) {
-    const key = keys[Math.floor(Math.random() * keys.length)]
-    rules[key] = mutateRuleStr(rules[key])
-  }
+  const key = keys[Math.floor(Math.random() * keys.length)]
+  rules[key] = mutateRuleStr(rules[key])
+
+  // Occasionally shift root pitch or scale
+  const rootPitch = Math.random() < 0.15
+    ? Math.max(55, Math.min(71, parent.rootPitch + (Math.round((Math.random() - 0.5) * 4))))
+    : parent.rootPitch
+  const scaleIdx = Math.random() < 0.1
+    ? Math.floor(Math.random() * SCALES.length)
+    : parent.scaleIdx
+
   return {
     id: uid(),
     axiom: parent.axiom,
@@ -97,6 +110,8 @@ function mutateOne(parent) {
     angle: Math.max(5, Math.min(60, parent.angle + (Math.random() - 0.5) * 4)),
     generations: parent.generations,
     gen: parent.gen + 1,
+    rootPitch,
+    scaleIdx,
   }
 }
 

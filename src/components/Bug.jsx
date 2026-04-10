@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { drawBug, bugHue } from '../bugDraw'
 import { playBug } from '../audio'
 import Notation from './Notation'
+import { SCALES, rootNoteName } from '../scales'
 
 export default function Bug({ bug, onSelect }) {
   const canvasRef = useRef(null)
@@ -62,6 +63,10 @@ export default function Bug({ bug, onSelect }) {
           <span className="ls-gen">gen {bug.gen}</span>
           <span className="ls-hint ls-hint-mouse">hover · click to evolve</span>
           <span className="ls-hint ls-hint-touch">tap · double-tap to evolve</span>
+        </div>
+        <div className="ls-row">
+          <span className="ls-key">scale</span>
+          <span className="ls-val">{rootNoteName(bug.rootPitch ?? 60)} {SCALES[bug.scaleIdx ?? 0].name}</span>
         </div>
         <div className="ls-row">
           <span className="ls-key">axiom</span>

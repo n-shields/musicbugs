@@ -27,15 +27,18 @@ export function playBug(lsystem) {
   const oscillators = []
   let t = startAt
 
-  for (const { midi, durIdx } of notes) {
-    const dur = quarterNote * DUR_MULTIPLIERS[durIdx]
+  for (const note of notes) {
+    // Triplet eighths use '8t', which maps to 1/3 of a quarter note
+    const mult = DUR_MULTIPLIERS[note.dur] ?? 0.5
+    const dur = quarterNote * mult
+
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.connect(gain)
     gain.connect(ctx.destination)
 
     osc.type = 'triangle'
-    osc.frequency.value = midiToFreq(midi)
+    osc.frequency.value = midiToFreq(note.midi)
 
     gain.gain.setValueAtTime(0, t)
     gain.gain.linearRampToValueAtTime(0.12, t + 0.015)
