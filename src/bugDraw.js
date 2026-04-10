@@ -8,6 +8,10 @@ function hashStr(s) {
   return h
 }
 
+export function depthHue(baseHue, depth) {
+  return (baseHue + depth * 20) % 360
+}
+
 export function bugHue(lsystem) {
   // Angle drives hue: tight (5°) → blue-purple (240°), wide (60°) → orange (30°)
   const angleHue = 240 - ((lsystem.angle - 5) / 55) * 210
@@ -82,9 +86,10 @@ export function drawBug(canvas, lsystem) {
 
   for (const [d, segs] of [...byDepth.entries()].sort((a, b) => a[0] - b[0])) {
     const t = maxDepth > 0 ? d / maxDepth : 0
+    const dHue = (hue + d * 20) % 360  // shift 20° per branch level
     ctx.lineWidth = Math.max(0.5, 2.5 - t * 2)
-    ctx.strokeStyle = `hsl(${hue}, 70%, ${48 + t * 22}%)`
-    ctx.shadowColor = `hsl(${hue}, 90%, ${55 + t * 15}%)`
+    ctx.strokeStyle = `hsl(${dHue}, 70%, ${48 + t * 22}%)`
+    ctx.shadowColor = `hsl(${dHue}, 90%, ${55 + t * 15}%)`
     ctx.shadowBlur = d === 0 ? 8 : 3
 
     ctx.beginPath()

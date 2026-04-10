@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import { Renderer, Stave, StaveNote, Voice, Formatter, Beam, Dot } from 'vexflow'
 import { buildNotes } from '../notes.js'
-import { bugHue } from '../bugDraw.js'
+import { bugHue, depthHue } from '../bugDraw.js'
 
 const NOTE_NAMES = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b']
 
@@ -31,7 +31,7 @@ export default function Notation({ bug }) {
     if (notes.length === 0) return
 
     const hue = bugHue(bug)
-    const color = `hsl(${hue}, 65%, 62%)`
+    const baseColor = `hsl(${hue}, 65%, 62%)` // staff lines, clef, beams
     const padL = 10
     const width = el.offsetWidth || 280
 
@@ -47,8 +47,8 @@ export default function Notation({ bug }) {
       const renderer = new Renderer(el, Renderer.Backends.SVG)
       renderer.resize(width, totalHeight)
       const ctx = renderer.getContext()
-      ctx.setFillStyle(color)
-      ctx.setStrokeStyle(color)
+      ctx.setFillStyle(baseColor)
+      ctx.setStrokeStyle(baseColor)
 
       for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
         const lineNotes = lines[lineIdx]
@@ -62,11 +62,12 @@ export default function Notation({ bug }) {
         stave.setContext(ctx).draw()
 
         const staveNotes = lineNotes.map(note => {
+          const nc = `hsl(${depthHue(hue, note.depth)}, 65%, 62%)`
           const sn = new StaveNote({
             keys: [midiToVexKey(note.midi)],
             duration: vexBaseDur(note.dur),
             auto_stem: true,
-          }).setStyle({ fillStyle: color, strokeStyle: color })
+          }).setStyle({ fillStyle: nc, strokeStyle: nc })
           if (note.dotted) Dot.buildAndAttach([sn], { all: true })
           return sn
         })
@@ -79,10 +80,10 @@ export default function Notation({ bug }) {
         beams.forEach(b => b.setContext(ctx).draw())
       }
 
-      // Recolour anything VexFlow drew in black
+      // Recolour structural elements (clef, staff lines, beams) left black by VexFlow
       el.querySelectorAll('svg path, svg rect, svg text').forEach(node => {
-        if (node.getAttribute('fill') === 'black') node.setAttribute('fill', color)
-        if (node.getAttribute('stroke') === 'black') node.setAttribute('stroke', color)
+        if (node.getAttribute('fill') === 'black') node.setAttribute('fill', baseColor)
+        if (node.getAttribute('stroke') === 'black') node.setAttribute('stroke', baseColor)
       })
     } catch (e) {
       console.error('Notation render error:', e)
