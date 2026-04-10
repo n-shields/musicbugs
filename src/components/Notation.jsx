@@ -36,7 +36,7 @@ export default function Notation({ bug }) {
 
     try {
       const renderer = new Renderer(el, Renderer.Backends.SVG)
-      renderer.resize(totalWidth, 82)
+      renderer.resize(totalWidth, 86)
       const ctx = renderer.getContext()
       ctx.setFillStyle(color)
       ctx.setStrokeStyle(color)
