@@ -80,7 +80,8 @@ body {
   border-radius: 12px;
   border: 1px solid #1e293b;
   display: grid;
-  grid-template-rows: 1fr auto auto;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto;
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -94,6 +95,8 @@ body {
 
 .bug-canvas {
   display: block;
+  grid-column: 1;
+  grid-row: 1;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -101,6 +104,8 @@ body {
 
 /* ── L-system panel ──────────────────────────────────────── */
 .bug-lsystem {
+  grid-column: 1;
+  grid-row: 2;
   border-top: 1px solid #1a2540;
   padding: 6px 14px 8px;
   display: flex;
@@ -154,11 +159,12 @@ body {
 
 /* ── Notation panel ──────────────────────────────────────── */
 .notation-wrap {
-  border-top: 1px solid #1a2540;
-  overflow-x: auto;
-  overflow-y: hidden;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  border-left: 1px solid #1a2540;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: #080b14;
-  padding-bottom: 4px;
 }
 
 .notation-wrap svg {
