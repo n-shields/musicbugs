@@ -6,6 +6,7 @@ import Notation from './Notation'
 export default function Bug({ bug, onSelect }) {
   const canvasRef = useRef(null)
   const stopRef = useRef(null)
+  const lastTapRef = useRef(0)
 
   useEffect(() => {
     if (canvasRef.current) drawBug(canvasRef.current, bug)
@@ -27,6 +28,23 @@ export default function Bug({ bug, onSelect }) {
     onSelect(bug)
   }
 
+  // Touch: single tap = play, double-tap = evolve
+  function handlePointerDown(e) {
+    if (e.pointerType !== 'touch') return
+    const now = Date.now()
+    if (now - lastTapRef.current < 300) {
+      e.preventDefault()
+      stopRef.current?.()
+      stopRef.current = null
+      lastTapRef.current = 0
+      onSelect(bug)
+    } else {
+      stopRef.current?.()
+      stopRef.current = playBug(bug)
+      lastTapRef.current = now
+    }
+  }
+
   const hue = bugHue(bug)
 
   return (
@@ -36,12 +54,14 @@ export default function Bug({ bug, onSelect }) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
+      onPointerDown={handlePointerDown}
     >
       <canvas ref={canvasRef} width={320} height={320} className="bug-canvas" />
       <div className="bug-lsystem">
         <div className="ls-meta">
           <span className="ls-gen">gen {bug.gen}</span>
-          <span className="ls-hint">hover · click to evolve</span>
+          <span className="ls-hint ls-hint-mouse">hover · click to evolve</span>
+          <span className="ls-hint ls-hint-touch">tap · double-tap to evolve</span>
         </div>
         <div className="ls-row">
           <span className="ls-key">axiom</span>

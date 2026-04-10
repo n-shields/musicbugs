@@ -7,6 +7,10 @@ body {
   overflow: hidden;
 }
 
+@media (max-width: 640px) {
+  body, #root { overflow-y: auto; height: auto; }
+}
+
 #root {
   width: 100vw;
   height: 100vh;
@@ -20,6 +24,10 @@ body {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+}
+
+@media (max-width: 640px) {
+  .app { height: auto; min-height: 100dvh; }
 }
 
 .app-header {
@@ -79,6 +87,15 @@ body {
   min-height: 0;
 }
 
+@media (max-width: 640px) {
+  .bug-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    flex: none;
+    height: auto;
+  }
+}
+
 /* ── Bug Card ────────────────────────────────────────────── */
 .bug-card {
   background: #0f172a;
@@ -91,6 +108,11 @@ body {
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s;
   min-height: 0;
+  touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+  .bug-card { min-height: 55vw; }
 }
 
 .bug-card:hover {
@@ -139,6 +161,14 @@ body {
 
 .bug-card:hover .ls-hint {
   color: #475569;
+}
+
+/* Show mouse hint by default; swap on touch devices */
+.ls-hint-touch { display: none; }
+
+@media (hover: none) {
+  .ls-hint-mouse { display: none; }
+  .ls-hint-touch { display: inline; }
 }
 
 .ls-row {

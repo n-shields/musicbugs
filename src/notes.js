@@ -19,7 +19,7 @@ export const DUR_MULTIPLIERS = [1, 0.5, 0.25, 0.125]
 
 export function buildNotes(lsystem) {
   const str = expand(lsystem)
-  const maxNotes = Math.min(8 * (lsystem.gen + 1), 64)
+  const maxNotes = Math.min(1 << Math.min(lsystem.gen, 6), 64) // 1, 2, 4, 8, 16, 32, 64
   const notes = []
   let pitch = 60, depth = 0
   const stack = []
