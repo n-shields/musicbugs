@@ -34,8 +34,10 @@ export function drawBug(canvas, lsystem) {
   const lines = []
 
   for (const c of str) {
-    if (c === 'F') {
-      const len = Math.max(0.4, 1.6 - depth * 0.22)
+    if (c === 'F' || c === 'H') {
+      // H draws a longer segment (half-note = more space visually)
+      const base = c === 'H' ? 2.4 : 1.6
+      const len = Math.max(0.4, base - depth * 0.22)
       const nx = x + Math.cos(a) * len
       const ny = y + Math.sin(a) * len
       lines.push([x, y, nx, ny, depth])

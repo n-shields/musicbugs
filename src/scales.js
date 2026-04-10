@@ -1,3 +1,16 @@
+// Weighted towards 4/4 and 3/4; unusual sigs appear occasionally
+export const TIME_SIGS = [
+  { num: 4, den: 4 },
+  { num: 4, den: 4 },
+  { num: 4, den: 4 },
+  { num: 3, den: 4 },
+  { num: 3, den: 4 },
+  { num: 6, den: 8 },
+  { num: 5, den: 4 },
+  { num: 7, den: 8 },
+  { num: 2, den: 4 },
+]
+
 export const SCALES = [
   { name: 'pentatonic major', intervals: [0, 2, 4, 7, 9] },
   { name: 'pentatonic minor', intervals: [0, 3, 5, 7, 10] },

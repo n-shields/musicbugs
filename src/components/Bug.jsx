@@ -93,6 +93,10 @@ export default function Bug({ bug, onSelect }) {
           <span className="ls-val">{rootNoteName(displayBug.rootPitch ?? 60)} {SCALES[displayBug.scaleIdx ?? 0].name}</span>
         </div>
         <div className="ls-row">
+          <span className="ls-key">time</span>
+          <span className="ls-val">{(displayBug.timeSig ?? { num: 4, den: 4 }).num}/{(displayBug.timeSig ?? { num: 4, den: 4 }).den}</span>
+        </div>
+        <div className="ls-row">
           <span className="ls-key">axiom</span>
           <span className="ls-val">{displayBug.axiom}</span>
         </div>

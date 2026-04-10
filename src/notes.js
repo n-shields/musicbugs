@@ -10,21 +10,35 @@ function quantize(midi, intervals) {
   return octave * 12 + nearest
 }
 
-function baseDur(depth) {
-  return ['q', '8', '16', '32'][Math.min(depth, 3)]
+// dur levels indexed by depth; durBase controls the slowest/fastest range
+const DUR_LEVELS = {
+  h: ['h', 'q', '8', '16'],   // half-note base: slow bugs
+  q: ['q', '8', '16', '16'],  // quarter-note base: no 32nds
 }
 
+function baseDur(depth, durBase) {
+  const levels = DUR_LEVELS[durBase ?? 'q']
+  return levels[Math.min(depth, 3)]
+}
+
+// Duration values in quarter-note units (used by audio AND notation)
 export const DUR_MULTIPLIERS = {
-  'q': 1, 'qd': 1.5,
+  'w': 4,   'wd': 6,
+  'h': 2,   'hd': 3,
+  'q': 1,   'qd': 1.5,
   '8': 0.5, '8d': 0.75,
   '16': 0.25, '16d': 0.375,
   '32': 0.125,
 }
 
+// Alias used by Notation.jsx for measure-beat accounting
+export const DUR_BEATS = DUR_MULTIPLIERS
+
 export function buildNotes(lsystem) {
   const scale    = SCALES[lsystem.scaleIdx  ?? 0].intervals
   const rootPitch = lsystem.rootPitch ?? 60
   const step      = lsystem.pitchStep ?? 2   // semitones per +/-
+  const durBase   = lsystem.durBase ?? 'q'
   const str       = expand(lsystem)
 
   const raw = []
@@ -36,21 +50,23 @@ export function buildNotes(lsystem) {
     const c = str[ci]
     if (raw.length >= 128) break
 
-    if (c === 'F') {
+    if (c === 'F' || c === 'H') {
       let midi = quantize(pitch, scale)
       while (midi < 60) midi += 12
       while (midi > 84) midi -= 12
 
-      // Chord: trunk note immediately before a branch gets a harmony fifth
+      // Chord: trunk F immediately before a branch gets a harmony fifth
       let chordMidi = null
-      if (depth === 0 && str[ci + 1] === '[') {
+      if (c === 'F' && depth === 0 && str[ci + 1] === '[') {
         let cm = quantize(midi + 7, scale)
         if (cm <= midi) cm += 12
         while (cm > 84) cm -= 12
         chordMidi = cm
       }
 
-      raw.push({ midi, depth, dur: baseDur(depth), chordMidi })
+      // H always produces a half note regardless of depth
+      const dur = c === 'H' ? 'h' : baseDur(depth, durBase)
+      raw.push({ midi, depth, dur, chordMidi })
       pitch += 1
     } else if (c === '+') {
       pitch += step
