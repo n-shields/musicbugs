@@ -80,7 +80,7 @@ body {
   border-radius: 12px;
   border: 1px solid #1e293b;
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr auto auto;
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -150,4 +150,17 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ── Notation panel ──────────────────────────────────────── */
+.notation-wrap {
+  border-top: 1px solid #1a2540;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #080b14;
+}
+
+.notation-wrap svg {
+  display: block;
+  background: transparent;
 }

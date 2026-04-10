@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { drawBug, bugHue } from '../bugDraw'
 import { playBug } from '../audio'
+import Notation from './Notation'
 
 export default function Bug({ bug, onSelect }) {
   const canvasRef = useRef(null)
@@ -53,6 +54,7 @@ export default function Bug({ bug, onSelect }) {
           </div>
         ))}
       </div>
+      <Notation bug={bug} />
     </div>
   )
 }
