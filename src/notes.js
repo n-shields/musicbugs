@@ -34,7 +34,7 @@ export function buildNotes(lsystem) {
 
   for (let ci = 0; ci < str.length; ci++) {
     const c = str[ci]
-    if (raw.length >= 64) break
+    if (raw.length >= 128) break
 
     if (c === 'F') {
       let midi = quantize(pitch, scale)
