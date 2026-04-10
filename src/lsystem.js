@@ -38,8 +38,10 @@ const BASE_SEEDS = [
 // Randomise musical character at startup
 export const SEEDS = BASE_SEEDS.map(s => ({
   ...s,
-  rootPitch: 60 + Math.floor(Math.random() * 12), // C4–B4
-  scaleIdx:  Math.floor(Math.random() * SCALES.length),
+  rootPitch:  60 + Math.floor(Math.random() * 12),  // C4–B4
+  scaleIdx:   Math.floor(Math.random() * SCALES.length),
+  pitchStep:  2 + Math.floor(Math.random() * 4),     // 2–5 semitones per +/-
+  ancestors:  [],
 }))
 
 // Expand using min(gen+1, generations) iterations so early-gen bugs are visually simple
@@ -95,13 +97,15 @@ function mutateOne(parent) {
   const key = keys[Math.floor(Math.random() * keys.length)]
   rules[key] = mutateRuleStr(rules[key])
 
-  // Occasionally shift root pitch or scale
   const rootPitch = Math.random() < 0.15
-    ? Math.max(55, Math.min(71, parent.rootPitch + (Math.round((Math.random() - 0.5) * 4))))
+    ? Math.max(55, Math.min(71, parent.rootPitch + Math.round((Math.random() - 0.5) * 4)))
     : parent.rootPitch
   const scaleIdx = Math.random() < 0.1
     ? Math.floor(Math.random() * SCALES.length)
     : parent.scaleIdx
+  const pitchStep = Math.random() < 0.15
+    ? Math.max(2, Math.min(7, parent.pitchStep + (Math.random() < 0.5 ? 1 : -1)))
+    : parent.pitchStep
 
   return {
     id: uid(),
@@ -112,6 +116,8 @@ function mutateOne(parent) {
     gen: parent.gen + 1,
     rootPitch,
     scaleIdx,
+    pitchStep,
+    ancestors: [...(parent.ancestors || []), parent],
   }
 }
 

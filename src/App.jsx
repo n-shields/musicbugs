@@ -5,7 +5,8 @@ import { resumeAudio } from './audio'
 
 export default function App() {
   const [bugs, setBugs] = useState(SEEDS)
-  const [history, setHistory] = useState([])
+  const [past,   setPast]   = useState([])
+  const [future, setFuture] = useState([])
   const [audioReady, setAudioReady] = useState(false)
 
   useEffect(() => {
@@ -19,14 +20,23 @@ export default function App() {
   }, [])
 
   function handleSelect(bug) {
-    setHistory(h => [...h, bugs])
+    setPast(p => [...p, bugs])
+    setFuture([])
     setBugs(mutate(bug))
   }
 
   function handleBack() {
-    if (history.length === 0) return
-    setBugs(history[history.length - 1])
-    setHistory(h => h.slice(0, -1))
+    if (past.length === 0) return
+    setFuture(f => [bugs, ...f])
+    setBugs(past[past.length - 1])
+    setPast(p => p.slice(0, -1))
+  }
+
+  function handleForward() {
+    if (future.length === 0) return
+    setPast(p => [...p, bugs])
+    setBugs(future[0])
+    setFuture(f => f.slice(1))
   }
 
   return (
@@ -34,12 +44,9 @@ export default function App() {
       <header className="app-header">
         <h1 className="app-title">musicbugs</h1>
         <div className="app-nav">
-          {!audioReady && (
-            <span className="audio-hint">click a bug to enable audio</span>
-          )}
-          {history.length > 0 && (
-            <button className="back-btn" onClick={handleBack}>← back</button>
-          )}
+          {!audioReady && <span className="audio-hint">click a bug to enable audio</span>}
+          <button className="nav-btn" disabled={past.length === 0}   onClick={handleBack}>←</button>
+          <button className="nav-btn" disabled={future.length === 0} onClick={handleForward}>→</button>
         </div>
       </header>
       <div className="bug-grid">

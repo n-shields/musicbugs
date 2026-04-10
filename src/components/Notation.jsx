@@ -63,8 +63,12 @@ export default function Notation({ bug }) {
 
         const staveNotes = lineNotes.map(note => {
           const nc = `hsl(${depthHue(hue, note.depth)}, 65%, 62%)`
+          // Two-note chord when chordMidi is set; keys must be low→high
+          const keys = note.chordMidi
+            ? [note.midi, note.chordMidi].sort((a, b) => a - b).map(midiToVexKey)
+            : [midiToVexKey(note.midi)]
           const sn = new StaveNote({
-            keys: [midiToVexKey(note.midi)],
+            keys,
             duration: vexBaseDur(note.dur),
             auto_stem: true,
           }).setStyle({ fillStyle: nc, strokeStyle: nc })

@@ -28,25 +28,29 @@ export function playBug(lsystem) {
   let t = startAt
 
   for (const note of notes) {
-    // Triplet eighths use '8t', which maps to 1/3 of a quarter note
     const mult = DUR_MULTIPLIERS[note.dur] ?? 0.5
     const dur = quarterNote * mult
+    const midis = note.chordMidi ? [note.midi, note.chordMidi] : [note.midi]
+    // Reduce gain slightly when playing chords to avoid clipping
+    const peakGain = note.chordMidi ? 0.09 : 0.12
 
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
+    for (const midi of midis) {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
 
-    osc.type = 'triangle'
-    osc.frequency.value = midiToFreq(note.midi)
+      osc.type = 'triangle'
+      osc.frequency.value = midiToFreq(midi)
 
-    gain.gain.setValueAtTime(0, t)
-    gain.gain.linearRampToValueAtTime(0.12, t + 0.015)
-    gain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.85)
+      gain.gain.setValueAtTime(0, t)
+      gain.gain.linearRampToValueAtTime(peakGain, t + 0.015)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.85)
 
-    osc.start(t)
-    osc.stop(t + dur)
-    oscillators.push(osc)
+      osc.start(t)
+      osc.stop(t + dur)
+      oscillators.push(osc)
+    }
     t += dur
   }
 

@@ -14,7 +14,6 @@ function baseDur(depth) {
   return ['q', '8', '16', '32'][Math.min(depth, 3)]
 }
 
-// Duration as a fraction of a quarter note
 export const DUR_MULTIPLIERS = {
   'q': 1, 'qd': 1.5,
   '8': 0.5, '8d': 0.75,
@@ -23,27 +22,40 @@ export const DUR_MULTIPLIERS = {
 }
 
 export function buildNotes(lsystem) {
-  const scale = SCALES[lsystem.scaleIdx ?? 0].intervals
+  const scale    = SCALES[lsystem.scaleIdx  ?? 0].intervals
   const rootPitch = lsystem.rootPitch ?? 60
-  const str = expand(lsystem)
+  const step      = lsystem.pitchStep ?? 2   // semitones per +/-
+  const str       = expand(lsystem)
 
   const raw = []
   let pitch = rootPitch
   let depth = 0
   const stack = []
 
-  for (const c of str) {
+  for (let ci = 0; ci < str.length; ci++) {
+    const c = str[ci]
     if (raw.length >= 64) break
+
     if (c === 'F') {
       let midi = quantize(pitch, scale)
       while (midi < 60) midi += 12
       while (midi > 84) midi -= 12
-      raw.push({ midi, depth, dur: baseDur(depth) })
+
+      // Chord: trunk note immediately before a branch gets a harmony fifth
+      let chordMidi = null
+      if (depth === 0 && str[ci + 1] === '[') {
+        let cm = quantize(midi + 7, scale)
+        if (cm <= midi) cm += 12
+        while (cm > 84) cm -= 12
+        chordMidi = cm
+      }
+
+      raw.push({ midi, depth, dur: baseDur(depth), chordMidi })
       pitch += 1
     } else if (c === '+') {
-      pitch += 2
+      pitch += step
     } else if (c === '-') {
-      pitch -= 2
+      pitch -= step
     } else if (c === '[') {
       stack.push(pitch)
       depth++
@@ -53,20 +65,10 @@ export function buildNotes(lsystem) {
     }
   }
 
-  // Post-process: dotted rhythm pairs.
-  // A note at depth D, when followed by a note at depth D+1, becomes dotted
-  // (e.g. dotted quarter → eighth, dotted eighth → sixteenth).
-  // Limited to depths 0–1 to keep it to well-known dotted-rhythm pairs.
-  const notes = raw.map((note, i) => {
+  // Dotted rhythm pairs: depth-D note followed by depth-(D+1) note
+  return raw.map((note, i) => {
     const next = raw[i + 1]
-    const dotted =
-      next !== undefined &&
-      note.depth <= 1 &&
-      next.depth === note.depth + 1
-    return dotted
-      ? { ...note, dur: note.dur + 'd', dotted: true }
-      : { ...note, dotted: false }
+    const dotted = next !== undefined && note.depth <= 1 && next.depth === note.depth + 1
+    return dotted ? { ...note, dur: note.dur + 'd', dotted: true } : { ...note, dotted: false }
   })
-
-  return notes
 }
