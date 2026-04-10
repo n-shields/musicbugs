@@ -1,10 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Bug from './components/Bug'
 import { SEEDS, mutate } from './lsystem'
+import { resumeAudio } from './audio'
 
 export default function App() {
   const [bugs, setBugs] = useState(SEEDS)
   const [history, setHistory] = useState([])
+  const [audioReady, setAudioReady] = useState(false)
+
+  useEffect(() => {
+    function unlock() {
+      resumeAudio()
+      setAudioReady(true)
+      window.removeEventListener('pointerdown', unlock)
+    }
+    window.addEventListener('pointerdown', unlock)
+    return () => window.removeEventListener('pointerdown', unlock)
+  }, [])
 
   function handleSelect(bug) {
     setHistory(h => [...h, bugs])
@@ -22,6 +34,9 @@ export default function App() {
       <header className="app-header">
         <h1 className="app-title">musicbugs</h1>
         <div className="app-nav">
+          {!audioReady && (
+            <span className="audio-hint">click a bug to enable audio</span>
+          )}
           {history.length > 0 && (
             <button className="back-btn" onClick={handleBack}>← back</button>
           )}

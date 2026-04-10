@@ -11,8 +11,8 @@ function midiToVexKey(midi) {
 }
 
 const NOTES_PER_LINE = 8
-const STAVE_BAND = 80   // px allocated per line
-const STAVE_OFFSET = 20 // top margin within each band
+const STAVE_BAND = 92   // px allocated per line (extra room for ledger lines below)
+const STAVE_OFFSET = 22 // top margin within each band
 
 export default function Notation({ bug }) {
   const containerRef = useRef(null)
@@ -33,7 +33,7 @@ export default function Notation({ bug }) {
     const width = el.offsetWidth || 280
 
     const numLines = Math.max(1, Math.ceil(notes.length / NOTES_PER_LINE))
-    const totalHeight = numLines * STAVE_BAND + 14
+    const totalHeight = numLines * STAVE_BAND + 22
 
     try {
       const renderer = new Renderer(el, Renderer.Backends.SVG)

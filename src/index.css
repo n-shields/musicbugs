@@ -63,6 +63,11 @@ body {
   color: #e2e8f0;
 }
 
+.audio-hint {
+  font-size: 0.75rem;
+  color: #334155;
+}
+
 /* ── Bug Grid ────────────────────────────────────────────── */
 .bug-grid {
   flex: 1;

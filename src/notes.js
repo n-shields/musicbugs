@@ -28,7 +28,7 @@ export function buildNotes(lsystem) {
     if (notes.length >= maxNotes) break
     if (c === 'F') {
       let midi = quantize(pitch)
-      while (midi < 48) midi += 12
+      while (midi < 60) midi += 12
       while (midi > 84) midi -= 12
       notes.push({ midi, durIdx: Math.min(depth, 3) })
       pitch += 1
